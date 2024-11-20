@@ -1,0 +1,72 @@
+networks:
+  ldap-network:
+    driver: bridge
+
+volumes:
+  openldap_data: # Define the openldap_data volume
+    driver: local
+  rhel8:
+    driver: local
+
+services:
+  openldap:
+    image: bitnami/openldap:2
+    ports:
+      - '1389:1389'
+      - '1636:1636'
+    environment:
+      - LDAP_ADMIN_USERNAME=admin
+      - LDAP_ADMIN_PASSWORD=adminpassword
+      - LDAP_USERS=user01,user02
+      - LDAP_PASSWORDS=password1,password2
+    volumes:
+      - 'openldap_data:/bitnami/openldap' # Use the defined volume
+    networks:
+      - ldap-network
+
+  jboss-eap:
+    image: registry.access.redhat.com/ubi8/ubi
+    container_name: jboss-eap
+    platform: linux/amd64
+    ports:
+      - '8080:8080' # HTTP port
+      - '9990:9990' # Admin Console port
+    volumes:
+      - './jboss-config:/opt/jboss/config' # Optional custom config
+    environment:
+      - JAVA_HOME=/usr/lib/jvm/java-11-openjdk
+      - JBOSS_HOME=/opt/jboss
+    command: ["/bin/bash", "/opt/jboss/setup-eap.sh"]
+    networks:
+      - ldap-network
+
+
+  rhel8:
+    image: registry.access.redhat.com/ubi8/ubi
+    platform: linux/amd64
+    #image: redhat/ubi8
+    ports:
+      - '8081:8080'
+      - '8082:80'
+    volumes:
+      - './rhelInit.sh:/rhelInit.sh'
+    command: ["/bin/bash", "/rhelInit.sh"]
+    networks:
+      - ldap-network
+
+
+
+#  samba:
+#    image: ubuntu:latest
+#    container_name: samba-server
+#    networks:
+#      - ldap-network
+#    depends_on:
+#      - openldap
+#    ports:
+#      - "445:445"
+#    volumes:
+#      - ./init.sh:/init.sh
+#    command: bash /init.sh
+
+

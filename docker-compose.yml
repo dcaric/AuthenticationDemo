@@ -1,0 +1,53 @@
+services:
+  openldap:
+    image: bitnami/openldap:2
+    ports:
+      - "1389:1389"
+      - "1636:1636"
+    environment:
+      LDAP_ADMIN_USERNAME: admin
+      LDAP_ADMIN_PASSWORD: adminpassword
+    networks:
+      - ldap-network
+    volumes:
+      - openldap_data:/bitnami/openldap
+
+  jboss-keycloak:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: jboss-eap:8.0
+    container_name: jboss-keycloak
+    platform: linux/amd64
+    ports:
+      - "8080:8080" # JBoss http
+      - "9990:9990" # JBoss Admin
+      - "8543:8543" # Keycloak https
+    networks:
+      - ldap-network
+    depends_on:
+      - openldap
+
+  rhel8:
+    image: registry.access.redhat.com/ubi8/ubi
+    platform: linux/amd64
+    container_name: rhel8
+    ports:
+      - "8081:8080"
+      - "8082:80"
+    volumes:
+      - "./add-email.ldif:/add-email.ldif" 
+      - "./rhelInit.sh:/rhelInit.sh"
+    networks:
+      - ldap-network
+    command: ["/bin/bash", "/rhelInit.sh"]
+
+networks:
+  ldap-network:
+    driver: bridge
+
+volumes:
+  openldap_data:
+    driver: local
+
+

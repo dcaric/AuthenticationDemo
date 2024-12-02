@@ -1,6 +1,7 @@
 FROM registry.access.redhat.com/ubi8/ubi
 
 # Install dependencies
+# this part installs several useful commands like ping, netstat etc.
 RUN yum update -y && yum install -y \
     java-17-openjdk \
     unzip \
@@ -23,7 +24,7 @@ ADD jboss-eap-8.0.zip /opt
 ADD keycloak-26.0.5.zip /opt
 
 
-# Unzip and Configure
+# Unzip jboss and keycloak zip files and Configure
 RUN unzip /opt/jboss-eap-8.0.zip -d /opt && \
     mv /opt/jboss-eap-8.0 /opt/jboss && \
     rm /opt/jboss-eap-8.0.zip && \
@@ -32,12 +33,12 @@ RUN unzip /opt/jboss-eap-8.0.zip -d /opt && \
     rm /opt/keycloak-26.0.5.zip
 
 
-# Add setup script
+# Add setup script in the container
 ADD setup-eap-keycloak.sh /opt/jboss/setup-eap-keycloak.sh
 RUN chmod +x /opt/jboss/setup-eap-keycloak.sh
 
 # Expose ports for JBoss and Kycloak
 EXPOSE 8080 9990 8543
 
-# Start JBoss
+# Start script
 CMD ["/bin/bash", "/opt/jboss/setup-eap-keycloak.sh"]

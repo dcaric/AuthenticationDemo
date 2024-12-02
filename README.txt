@@ -94,7 +94,14 @@ Next Steps
 
 
 
+
+
+
+
+
+===========================================================
 KEYCLOAK:
+===========================================================
 
 https://www.youtube.com/watch?v=wEBYOy07WS0
 https://www.keycloak.org/downloads
@@ -112,10 +119,10 @@ http://localhost:8543
 1. Verify OpenLDAP Configuration
 
 Make sure your OpenLDAP server is running and accessible. You’ve already confirmed this with the ldapsearch command:
-ldapsearch -x -H ldap://192.168.7.103:1389 -D "cn=admin,dc=example,dc=org" -w adminpassword -b "dc=example,dc=org" "(objectClass=*)"
+ldapsearch -x -H ldap://host.docker.internal:1389 -D "cn=admin,dc=example,dc=org" -w adminpassword -b "dc=example,dc=org" "(objectClass=*)"
 
 Note the following details for configuration:
-	•	Connection URL: ldap://192.168.7.103:1389
+	•	Connection URL: ldap://host.docker.internal:1389
 	•	Base DN: dc=example,dc=org
 	•	Bind DN: cn=admin,dc=example,dc=org
 	•	Bind Password: adminpassword
@@ -254,4 +261,134 @@ ldapsearch -x -H ldap://192.168.7.103:1389 -D "cn=admin,dc=example,dc=org" -w ad
 
 
 
+
+ADD 2 CLIENTS IN THE KEYCLOAK
+================================
+Those 2 clients will be for 2 apps. The aim is to login with the APP1. It will be provided base password which user has to change
+Aftar after that new password will be stored in OpenLDAP.
+So when this same user use APP2 Keycloak will recogize him and user will go to the APP2 without login procedure, without writing password
+
+
+client1
+
+app1
+root url: http://host.docker.internal:8081
+web origins: *
+
+
+client2
+
+app2
+root url: http://host.docker.internal:8082
+web origins: *
+
+
+
+
+
+
+
+	1.	Go to the Authentication > Flows Tab
+	•	In the Keycloak admin console, navigate to Authentication and select the Flows tab.
+	2.	Locate Your Flow
+	•	Find your Browser Passwordless flow in the list.
+	3.	Bind the Flow
+	•	Click the Action button (three dots) on the right-hand side of your Browser Passwordless flow.
+	•	From the dropdown menu, select Bind Flow.
+	4.	Confirm Binding
+	•	Keycloak will confirm the flow is now bound to the Browser Flow category and will be used for user logins.
+
+
+
+Use Keycloak’s Built-In Pages:
+Instead of using a custom dummy redirect_uri, you can test directly using Keycloak’s built-in account console. Update your redirect_uri to:
+
+
+TESTING FLOW
+==============
+
+redirect_uri=http://localhost:8543/realms/PaolaCompany/account/&
+this is just for the testing
+It will be URL for tha app1 
+http://host.docker.internal:8081/*
+
+http://localhost:8543/realms/PaolaCompany/protocol/openid-connect/auth?
+client_id=app1&
+redirect_uri=http://localhost:8543/realms/PaolaCompany/account/&
+response_type=code&
+scope=openid
+
+
+It proves several key aspects of your Keycloak configuration and flow:
+
+1. Keycloak Server Accessibility
+
+	•	Confirms that the Keycloak server is up and running on localhost:8543 and is able to handle OpenID Connect (OIDC) authentication requests.
+
+2. Realm Configuration
+
+	•	Verifies that the PaolaCompany realm exists and is properly configured to process authentication requests.
+
+3. Client Configuration
+
+	•	Checks if the app1 client is registered in the PaolaCompany realm.
+	•	Validates that the client settings (e.g., client_id) are correctly recognized by Keycloak.
+
+4. Redirect URI Validation
+
+	•	Ensures that the redirect_uri provided (http://localhost:8543/realms/PaolaCompany/account/) matches one of the allowed redirect URIs configured for the app1 client in Keycloak.
+
+5. Authentication Flow Trigger
+
+	•	Initiates the OpenID Connect authorization flow (response_type=code) by redirecting the user to Keycloak’s login page, proving that the browser flow and authentication mechanisms are functioning correctly.
+
+6. Scopes Validation
+
+	•	Verifies that the requested openid scope is allowed for the app1 client and initiates the login with this scope.
+
+
+
+
+
+	
+
+
+
+
+
+
+==============================
+FreeIpa
+==============================
+
+
+Instead of trying to manage example.com, use a subdomain, such as ipa.example.com. This avoids conflicts with existing DNS servers.
+
+ipa-server-install --unattended \
+    --realm=IPA.EXAMPLE.COM \
+    --domain=ipa.example.com \
+    --ds-password=admin1234 \
+    --admin-password=admin1234 \
+    --hostname=ipa.example.com \
+    --setup-dns \
+    --forwarder=8.8.8.8 \
+    --skip-mem-check \
+    --no-ntp \
+    --auto-reverse
+
+
+
+You can tell FreeIPA to proceed without trying to manage DNS for example.com. Use the --allow-zone-overlap option:
+
+ipa-server-install --unattended \
+    --realm=EXAMPLE.COM \
+    --domain=example.com \
+    --ds-password=admin1234 \
+    --admin-password=admin1234 \
+    --hostname=ipa.example.com \
+    --setup-dns \
+    --forwarder=8.8.8.8 \
+    --skip-mem-check \
+    --no-ntp \
+    --allow-zone-overlap
 

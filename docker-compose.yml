@@ -1,6 +1,8 @@
 services:
   openldap:
     image: bitnami/openldap:2
+    container_name: openldap
+    platform: linux/amd64
     ports:
       - "1389:1389"
       - "1636:1636"
@@ -11,6 +13,7 @@ services:
       - ldap-network
     volumes:
       - openldap_data:/bitnami/openldap
+
 
   jboss-keycloak:
     build:
@@ -28,16 +31,19 @@ services:
     depends_on:
       - openldap
 
+
   rhel8:
     image: registry.access.redhat.com/ubi8/ubi
     platform: linux/amd64
     container_name: rhel8
     ports:
-      - "8081:8080"
-      - "8082:80"
+      - "8081:8081"
+      - "8082:8082"
+      - "80:80"
+      - "8083:443"  # If SSL/TLS is needed
     volumes:
-      - "./add-email.ldif:/add-email.ldif" 
-      - "./rhelInit.sh:/rhelInit.sh"
+      - ./add-email.ldif:/add-email.ldif 
+      - ./rhelInit.sh:/rhelInit.sh
     networks:
       - ldap-network
     command: ["/bin/bash", "/rhelInit.sh"]
@@ -49,5 +55,6 @@ networks:
 volumes:
   openldap_data:
     driver: local
+  freeipa_data:
 
 

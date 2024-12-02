@@ -14,6 +14,10 @@ modifying entry "cn=user01,ou=users,dc=example,dc=org"
 
 modifying entry "cn=user02,ou=users,dc=example,dc=org"
 
+
+192.168.0.53
+ldapsearch -x -H ldap://192.168.0.53:1389 -D "cn=admin,dc=example,dc=org" -w adminpassword -b "dc=example,dc=org" "(objectClass=*)"
+
 [root@80e523624db0 /]# ldapsearch -x -H ldap://192.168.7.103:1389 -D "cn=admin,dc=example,dc=org" -w adminpassword -b "dc=example,dc=org" "(objectClass=*)"
 # extended LDIF
 #
